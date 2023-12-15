@@ -164,10 +164,13 @@ imports: [
 ```
 
 GLOBAL:
+```
 // Optional
 app.setGlobalPrefix('api');
 // Must add this line so our Validation in DTOs can work.
 app.useGlobalPipes(new ValidationPipe())
+
+```
 
 AUTH CONTROLLER AND SERVICES:
 
@@ -183,7 +186,6 @@ constructor(private authService: AuthService) {}
 ```
 
 npm i bcrypt @types/bcrypt
-
 
 //REGISTER METHOD
 ```
@@ -264,14 +266,16 @@ async login(dto: LoginDto) {
 
 CONTROLLER SHOULD HAVE: 
 
+```
 @UseGuards(AuthGuard('jwt'))
-
 for @Req() request.
+```
 
 SWAGGER:
 
 npm install --save @nestjs/swagger
 
+```
 // Swagger
   const config = new DocumentBuilder()
     .setTitle('Todo App')
@@ -287,9 +291,10 @@ npm install --save @nestjs/swagger
   @IsString()
   @IsNotEmpty({ message: 'Surname is required' })
   @ApiProperty()
-
+```
 
 Delete User's Token and Todos with @InjectModel:
+```
 async deleteUser(userId: IJwtPayload) {
     await this.todoModel.deleteMany({ userId: userId });
     await this.tokenModel.findOneAndDelete({ userId: userId });
@@ -297,8 +302,10 @@ async deleteUser(userId: IJwtPayload) {
 
     return { message: 'User deleted' };
   }
+```
 
 E2E TEST: 
+```
 import { Test } from "@nestjs/testing";
 import { AppModule } from "../src/app.module"
 import { INestApplication, ValidationPipe } from "@nestjs/common";
@@ -492,4 +499,4 @@ describe('App e2e', () => {
 
 
 });
-
+```

@@ -21,9 +21,10 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
 
   async validate(payload: IJwtPayload): Promise<Token> {
     const userId = new Types.ObjectId(payload.userId);
+
     const token = await this.tokenModel
       .findOne({ userId })
-      .select('-_id userId');
+      .select('-_id userId roles');
 
     if (!token) {
       throw new UnauthorizedException();

@@ -1,6 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import * as mongoose from 'mongoose';
 import { User } from './users.schema';
+import { Role } from '../enums/role.enum';
 
 export type TokenSchema = mongoose.HydratedDocument<Token>;
 
@@ -11,6 +12,9 @@ export class Token {
 
   @Prop({ required: true })
   token: string;
+
+  @Prop({ required: true })
+  roles: Role[];
 }
 
 export const TokenSchema = SchemaFactory.createForClass(Token);

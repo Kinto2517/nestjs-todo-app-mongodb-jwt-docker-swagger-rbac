@@ -41,6 +41,7 @@ export class AuthService {
       name: user.name,
       surname: user.surname,
       email: user.email,
+      roles: user.roles,
     };
 
     return userResponse;
@@ -69,13 +70,15 @@ export class AuthService {
     }
 
     const userId = user._id;
+    const payload: IJwtPayload = { userId, roles: user.roles }
 
-    const token = await this.generateToken({ userId });
-
+    const token = await this.generateToken(payload);
+    const roles = payload.roles;
+    
     await this.tokenModel.findOneAndUpdate(
-      { userId: new Types.ObjectId(String(userId)) },
-      { $set: { token } },
-      { upsert: true, new: true },
+      { userId },
+      { userId, token, roles },
+      { upsert: true },
     );
 
     return { token };
@@ -92,7 +95,7 @@ export class AuthService {
   async getUserInfo(userId: IJwtPayload) {
     const user = await this.userModel
       .findById(userId)
-      .select('name surname email');
+      .select('name surname email roles');
     return user;
   }
 

@@ -5,7 +5,7 @@ Nestjs Todo App
 * Jwt Auth (+)
 * Swagger (+)
 * E2E Test (+)
-* Role Based Auth
+* Role Based Auth (+)
 * Microservice
 
 
@@ -499,4 +499,144 @@ describe('App e2e', () => {
 
 
 });
+```
+
+
+ROLE BASED AUTHENTICATION - IJWTPAYLOAD CHANGE:
+
+
+Role Decorator: 
+```
+import { SetMetadata } from '@nestjs/common';
+import { Role } from '../enums/role.enum';
+
+export const ROLES_KEY = 'roles';
+export const Roles = (...roles: Role[]) => SetMetadata(ROLES_KEY, roles);
+```
+
+Role Enum:
+
+```
+export enum Role {
+    User = 'user',
+    Admin = 'admin',
+  }
+```
+Role Guard:
+
+```
+import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
+import { Role } from '../enums/role.enum';
+import { ROLES_KEY } from '../decorator/role.decorator';
+
+@Injectable()
+export class RolesGuard implements CanActivate {
+  constructor(private reflector: Reflector) {}
+
+  canActivate(context: ExecutionContext): boolean {
+    const requiredRoles = this.reflector.getAllAndOverride<Role[]>(ROLES_KEY, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
+    if (!requiredRoles) {
+      return true;
+    }
+    const { user } = context.switchToHttp().getRequest();
+    console.log(user);
+    
+    return requiredRoles.some((role) => user.roles?.includes(role));
+  }
+}
+```
+
+* Guard Enum Decorator are mostly Copy Paste.
+
+CHANGE IJWTPAYLOAD AND USER:
+
+```
+export interface IJwtPayload {
+  userId: Types.ObjectId;
+  roles: Role[];
+}
+```
+
+User.schema: 
+
+```
+@Prop({ required: true, default: Role.User })
+  roles: Role[];
+```
+
+Token.schema: 
+
+
+```
+@Prop({ required: true })
+  roles: Role[];
+```
+
+Change Validate So We Can Select Roles:
+
+```
+ async validate(payload: IJwtPayload): Promise<Token> {
+    const userId = new Types.ObjectId(payload.userId);
+
+    const token = await this.tokenModel
+      .findOne({ userId })
+      .select('-_id userId roles');
+
+    if (!token) {
+      throw new UnauthorizedException();
+    }
+
+    return token;
+  }
+```
+
+* Auth Service:
+
+```
+async getUserInfo(userId: IJwtPayload) {
+    const user = await this.userModel
+      .findById(userId)
+      .select('name surname email roles');
+    return user;
+```
+
+- LOGIN METHOD: 
+
+```
+  async login(dto: LoginDto) {
+    const { email, password } = dto;
+
+    const user = await this.userModel.findOne({ email });
+
+    if (!user) {
+      throw new BadRequestException('Invalid Email');
+    }
+
+    const isPasswordMatches = await this.comparePassword(
+      password,
+      user.password,
+    );
+
+    if (!isPasswordMatches) {
+      throw new BadRequestException('Invalid Password');
+    }
+
+    const userId = user._id;
+    const payload: IJwtPayload = { userId, roles: user.roles }
+
+    const token = await this.generateToken(payload);
+    const roles = payload.roles;
+    
+    await this.tokenModel.findOneAndUpdate(
+      { userId },
+      { userId, token, roles },
+      { upsert: true },
+    );
+
+    return { token };
+  }
 ```

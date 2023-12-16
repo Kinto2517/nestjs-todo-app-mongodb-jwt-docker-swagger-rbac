@@ -16,6 +16,9 @@ import { AuthGuard } from '@nestjs/passport';
 import { TodosDto } from './dto';
 import { Todos } from './schemas';
 import { TodosUpdateDto } from './dto/todos-update.dto';
+import { Roles } from 'src/auth/decorator/role.decorator';
+import { Role } from 'src/auth/enums/role.enum';
+import { RolesGuard } from 'src/auth/guard/roles.guard';
 
 @Controller('todo')
 export class TodoController {
@@ -38,7 +41,8 @@ export class TodoController {
     }
 
     @ApiBearerAuth()
-    @UseGuards(AuthGuard('jwt'))
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.User)
     @Post('create')
     createTodo(@Request() req, @Body() todosDto: TodosDto): Promise<Todos> {
         const userId = req.user.userId;

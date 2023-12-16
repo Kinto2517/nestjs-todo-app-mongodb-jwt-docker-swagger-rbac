@@ -640,3 +640,16 @@ async getUserInfo(userId: IJwtPayload) {
     return { token };
   }
 ```
+
+TODO - RoleGuard:
+
+```
+providers: [TodoService, RolesGuard]
+```
+
+TODO - Controller:
+
+```
+@UseGuards(AuthGuard('jwt'), RolesGuard)
+@Roles(Role.User)
+```
